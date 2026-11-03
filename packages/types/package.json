@@ -1,0 +1,14 @@
+{
+  "name": "@wac/types",
+  "version": "1.0.0",
+  "description": "Shared domain types and interfaces for Wireless Access Controller",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}

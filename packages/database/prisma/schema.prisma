@@ -1,0 +1,666 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// 1. TENANCY, HIERARCHY & RBAC
+// ==========================================
+
+enum UserRole {
+  SUPER_ADMIN
+  ORG_ADMIN
+  NETWORK_ADMIN
+  WIRELESS_ADMIN
+  SECURITY_ADMIN
+  OPERATOR
+  AUDITOR
+}
+
+model Organization {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  settings    Json?    @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users                User[]
+  sites                Site[]
+  controllers          WirelessController[]
+  accessPoints         AccessPoint[]
+  ssids                Ssid[]
+  apGroups             ApGroup[]
+  configurationJobs    ConfigurationJob[]
+  discoveryJobs        DiscoveryJob[]
+  alerts               Alert[]
+  alertRules           AlertRule[]
+  auditLogs            AuditLog[]
+  wirelessClients      WirelessClient[]
+
+  @@map("organizations")
+}
+
+model Site {
+  id        String   @id @default(uuid())
+  orgId     String
+  name      String
+  timezone  String   @default("UTC")
+  address   String?
+  latitude  Float?
+  longitude Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization   Organization         @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  buildings      Building[]
+  controllers    WirelessController[]
+  accessPoints   AccessPoint[]
+  wirelessClients WirelessClient[]
+
+  @@index([orgId])
+  @@map("sites")
+}
+
+model Building {
+  id         String   @id @default(uuid())
+  siteId     String
+  name       String
+  floorCount Int      @default(1)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  site         Site          @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  floors       Floor[]
+  accessPoints AccessPoint[]
+
+  @@index([siteId])
+  @@map("buildings")
+}
+
+model Floor {
+  id          String   @id @default(uuid())
+  buildingId  String
+  floorNumber Int
+  name        String
+  floorPlanUrl String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  building Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+
+  @@index([buildingId])
+  @@map("floors")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  orgId        String
+  email        String    @unique
+  passwordHash String
+  name         String
+  role         UserRole  @default(OPERATOR)
+  mfaSecret    String?
+  mfaEnabled   Boolean   @default(false)
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  failedLogins Int       @default(0)
+  lockedUntil  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  organization      Organization       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  initiatedJobs     ConfigurationJob[]
+  acknowledgedAlerts Alert[]           @relation("AcknowledgedByUser")
+  auditLogs         AuditLog[]
+
+  @@index([orgId])
+  @@map("users")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  orgId      String
+  userId     String?
+  action     String
+  targetType String
+  targetId   String?
+  ipAddress  String?
+  details    Json?    @default("{}")
+  createdAt  DateTime @default(now())
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([orgId, createdAt])
+  @@map("audit_logs")
+}
+
+// ==========================================
+// 2. CONTROLLERS & ACCESS POINTS
+// ==========================================
+
+enum VendorType {
+  CISCO
+  ARUBA
+  OMADA
+  UNIFI
+  RUIJIE
+  NATIVE_CAPWAP
+}
+
+enum ControllerStatus {
+  ONLINE
+  OFFLINE
+  DEGRADED
+  AUTH_ERROR
+}
+
+model WirelessController {
+  id          String           @id @default(uuid())
+  orgId       String
+  siteId      String?
+  name        String
+  vendor      VendorType
+  host        String
+  port        Int
+  protocol    String           @default("https")
+  credentials Json             // Encrypted auth credentials
+  apiVersion  String?
+  status      ControllerStatus @default(OFFLINE)
+  lastSyncAt  DateTime?
+  apCount     Int              @default(0)
+  metadata    Json?            @default("{}")
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  organization Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  site         Site?         @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  accessPoints AccessPoint[]
+
+  @@index([orgId])
+  @@map("wireless_controllers")
+}
+
+enum ApStatus {
+  ONLINE
+  OFFLINE
+  PROVISIONING
+  JOINING
+  ERROR
+}
+
+enum ConfigDriftStatus {
+  IN_SYNC
+  DRIFT_DETECTED
+  PENDING_DEPLOY
+}
+
+model AccessPoint {
+  id                    String            @id @default(uuid())
+  orgId                 String
+  siteId                String?
+  buildingId            String?
+  controllerId          String?
+  apGroupId             String?
+  name                  String
+  macAddress            String            @unique
+  ipAddress             String
+  serialNumber          String?           @unique
+  vendor                VendorType
+  model                 String
+  firmwareVersion       String?
+  status                ApStatus          @default(OFFLINE)
+  capwapState           String?
+  uptimeSeconds         Int               @default(0)
+  cpuUsagePercent       Float             @default(0)
+  memoryUsagePercent    Float             @default(0)
+  connectedClientsCount Int               @default(0)
+  lastSeenAt            DateTime          @default(now())
+  configDrift           ConfigDriftStatus @default(IN_SYNC)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  organization       Organization        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  site               Site?               @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  building           Building?           @relation(fields: [buildingId], references: [id], onDelete: SetNull)
+  controller         WirelessController? @relation(fields: [controllerId], references: [id], onDelete: SetNull)
+  apGroup            ApGroup?            @relation(fields: [apGroupId], references: [id], onDelete: SetNull)
+  radios             Radio[]
+  wirelessClients    WirelessClient[]
+  configurationItems ConfigurationJobItem[]
+
+  @@index([orgId, status])
+  @@index([controllerId])
+  @@index([apGroupId])
+  @@map("access_points")
+}
+
+enum RadioBand {
+  BAND_2_4GHZ
+  BAND_5GHZ
+  BAND_6GHZ
+}
+
+model Radio {
+  id                 String    @id @default(uuid())
+  apId               String
+  radioIndex         Int       @default(0)
+  band               RadioBand
+  channel            Int
+  channelWidth       Int       @default(20) // 20, 40, 80, 160
+  txPowerDbm         Int       @default(20)
+  adminState         String    @default("ENABLED")
+  operationalState   String    @default("UP")
+  utilizationPercent Float     @default(0)
+  noiseFloorDbm      Int       @default(-95)
+  clientCount        Int       @default(0)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  accessPoint AccessPoint @relation(fields: [apId], references: [id], onDelete: Cascade)
+  wirelessClients WirelessClient[]
+
+  @@unique([apId, radioIndex])
+  @@map("radios")
+}
+
+// ==========================================
+// 3. WIRELESS NETWORKS & CONFIGURATION ENGINE
+// ==========================================
+
+enum SecurityType {
+  OPEN
+  WPA2_PERSONAL
+  WPA2_ENTERPRISE
+  WPA3_PERSONAL
+  WPA3_ENTERPRISE
+  WPA2_WPA3_MIXED
+}
+
+model Ssid {
+  id                  String       @id @default(uuid())
+  orgId               String
+  name                String
+  enabled             Boolean      @default(true)
+  broadcastSsid       Boolean      @default(true)
+  securityType        SecurityType @default(WPA2_PERSONAL)
+  passphrase          String?      // Encrypted
+  vlanId              Int          @default(1)
+  clientIsolation     Boolean      @default(false)
+  bandSteering        Boolean      @default(true)
+  minDataRateMbps     Float?       @default(12)
+  maxBandwidthDownKbps Int?
+  maxBandwidthUpKbps   Int?
+  bands               Json         @default("[\"BAND_2_4GHZ\", \"BAND_5GHZ\"]")
+  radiusPrimaryIp     String?
+  radiusSecondaryIp   String?
+  radiusPort          Int?         @default(1812)
+  radiusSecret        String?      // Encrypted
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  organization Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  apGroupSsids ApGroupSsid[]
+  wirelessClients WirelessClient[]
+
+  @@unique([orgId, name])
+  @@map("ssids")
+}
+
+model ApGroup {
+  id          String   @id @default(uuid())
+  orgId       String
+  name        String
+  description String?
+  tags        Json?    @default("[]")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organization      Organization       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  accessPoints      AccessPoint[]
+  apGroupSsids      ApGroupSsid[]
+  configurationJobs ConfigurationJob[]
+
+  @@unique([orgId, name])
+  @@map("ap_groups")
+}
+
+model ApGroupSsid {
+  id           String   @id @default(uuid())
+  apGroupId    String
+  ssidId       String
+  vlanOverride Int?
+  createdAt    DateTime @default(now())
+
+  apGroup ApGroup @relation(fields: [apGroupId], references: [id], onDelete: Cascade)
+  ssid    Ssid    @relation(fields: [ssidId], references: [id], onDelete: Cascade)
+
+  @@unique([apGroupId, ssidId])
+  @@map("ap_group_ssids")
+}
+
+enum DeploymentStatus {
+  PENDING
+  VALIDATING
+  IN_PROGRESS
+  SUCCESS
+  PARTIAL_SUCCESS
+  FAILED
+  ROLLED_BACK
+  OUT_OF_SYNC
+}
+
+model ConfigurationJob {
+  id                String           @id @default(uuid())
+  orgId             String
+  apGroupId         String?
+  status            DeploymentStatus @default(PENDING)
+  dryRun            Boolean          @default(false)
+  configSnapshot    Json             // Complete unified config payload
+  errorSummary      String?
+  initiatedByUserId String?
+  startedAt         DateTime         @default(now())
+  completedAt       DateTime?
+
+  organization Organization           @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  apGroup      ApGroup?               @relation(fields: [apGroupId], references: [id], onDelete: SetNull)
+  initiatedBy  User?                  @relation(fields: [initiatedByUserId], references: [id], onDelete: SetNull)
+  items        ConfigurationJobItem[]
+
+  @@index([orgId, status])
+  @@map("configuration_jobs")
+}
+
+model ConfigurationJobItem {
+  id              String           @id @default(uuid())
+  jobId           String
+  apId            String
+  status          DeploymentStatus @default(PENDING)
+  preCheckResult  Json?
+  postCheckResult Json?
+  diffJson        Json?
+  errorMessage    String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  job         ConfigurationJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  accessPoint AccessPoint      @relation(fields: [apId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, apId])
+  @@map("configuration_job_items")
+}
+
+// ==========================================
+// 4. WIRELESS CLIENTS
+// ==========================================
+
+model WirelessClient {
+  id          String   @id @default(uuid())
+  orgId       String
+  siteId      String?
+  apId        String
+  radioId     String?
+  ssidId      String?
+  macAddress  String
+  ipAddress   String?
+  hostname    String?
+  osType      String?
+  vlan        Int      @default(1)
+  rssiDbm     Int      @default(-65)
+  snrDb       Int      @default(30)
+  rxBytes     BigInt   @default(0)
+  txBytes     BigInt   @default(0)
+  authMethod  String   @default("WPA2")
+  connectedAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  site         Site?        @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  accessPoint  AccessPoint  @relation(fields: [apId], references: [id], onDelete: Cascade)
+  radio        Radio?       @relation(fields: [radioId], references: [id], onDelete: SetNull)
+  ssid         Ssid?        @relation(fields: [ssidId], references: [id], onDelete: SetNull)
+
+  @@index([orgId, macAddress])
+  @@index([apId])
+  @@map("wireless_clients")
+}
+
+// ==========================================
+// 5. FREERADIUS AAA INTEGRATION TABLES
+// ==========================================
+
+model Nas {
+  id          Int      @id @default(autoincrement())
+  nasname     String   @unique // IP or hostname
+  shortname   String
+  type        String   @default("other")
+  ports       Int?
+  secret      String
+  server      String?
+  community   String?
+  description String?
+  createdAt   DateTime @default(now())
+
+  @@map("nas")
+}
+
+model RadCheck {
+  id        Int    @id @default(autoincrement())
+  username  String
+  attribute String
+  op        String @default(":=")
+  value     String
+
+  @@index([username])
+  @@map("radcheck")
+}
+
+model RadReply {
+  id        Int    @id @default(autoincrement())
+  username  String
+  attribute String
+  op        String @default("=")
+  value     String
+
+  @@index([username])
+  @@map("radreply")
+}
+
+model RadGroupCheck {
+  id        Int    @id @default(autoincrement())
+  groupname String
+  attribute String
+  op        String @default(":=")
+  value     String
+
+  @@index([groupname])
+  @@map("radgroupcheck")
+}
+
+model RadGroupReply {
+  id        Int    @id @default(autoincrement())
+  groupname String
+  attribute String
+  op        String @default("=")
+  value     String
+
+  @@index([groupname])
+  @@map("radgroupreply")
+}
+
+model RadUserGroup {
+  id        Int    @id @default(autoincrement())
+  username  String
+  groupname String
+  priority  Int    @default(1)
+
+  @@index([username])
+  @@map("radusergroup")
+}
+
+model RadAcct {
+  radacctid        BigInt    @id @default(autoincrement())
+  acctsessionid    String
+  acctuniqueid     String    @unique
+  username         String
+  groupname        String?
+  realm            String?
+  nasipaddress     String
+  nasportid        String?
+  nasporttype      String?
+  acctstarttime    DateTime?
+  acctupdatetime   DateTime?
+  acctstoptime     DateTime?
+  acctinterval     Int?
+  acctsessiontime  Int?
+  acctauthentic    String?
+  connectinfo_start String?
+  connectinfo_stop String?
+  acctinputoctets  BigInt?   @default(0)
+  acctoutputoctets BigInt?   @default(0)
+  calledstationid  String?
+  callingstationid String?   // Client MAC
+  acctterminatecause String?
+  servicetype      String?
+  framedprotocol   String?
+  framedipaddress  String?
+
+  @@index([username])
+  @@index([nasipaddress])
+  @@index([callingstationid])
+  @@map("radacct")
+}
+
+model RadPostAuth {
+  id       BigInt   @id @default(autoincrement())
+  username String
+  pass     String?
+  reply    String
+  authdate DateTime @default(now())
+
+  @@index([username])
+  @@map("radpostauth")
+}
+
+// ==========================================
+// 6. DISCOVERY, ALERTS & SYSTEM
+// ==========================================
+
+enum DiscoveryStatus {
+  QUEUED
+  SCANNING
+  COMPLETED
+  FAILED
+}
+
+model DiscoveryJob {
+  id                    String          @id @default(uuid())
+  orgId                 String
+  siteId                String?
+  subnetRange           String
+  snmpVersion           String          @default("v2c")
+  community             String?
+  status                DiscoveryStatus @default(QUEUED)
+  discoveredDevicesCount Int            @default(0)
+  rawResults            Json?           @default("[]")
+  startedAt             DateTime        @default(now())
+  completedAt           DateTime?
+
+  organization Organization       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  devices      DiscoveredDevice[]
+
+  @@index([orgId, status])
+  @@map("discovery_jobs")
+}
+
+model DiscoveredDevice {
+  id           String     @id @default(uuid())
+  jobId        String
+  ip           String
+  mac          String?
+  sysDescr     String?
+  vendor       VendorType @default(NATIVE_CAPWAP)
+  model        String?
+  serialNumber String?
+  status       String     @default("NEW") // NEW, IMPORTED, IGNORED
+  discoveredAt DateTime   @default(now())
+
+  job DiscoveryJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@map("discovered_devices")
+}
+
+enum AlertSeverity {
+  CRITICAL
+  WARNING
+  INFO
+}
+
+enum AlertStatus {
+  ACTIVE
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+model AlertRule {
+  id              String        @id @default(uuid())
+  orgId           String
+  name            String
+  metric          String        // AP_DOWN, HIGH_CPU, HIGH_UTILIZATION, DRIFT_DETECTED
+  condition       String        // GT, LT, EQ
+  threshold       Float
+  severity        AlertSeverity @default(WARNING)
+  cooldownMinutes Int           @default(15)
+  enabled         Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  alerts       Alert[]
+
+  @@map("alert_rules")
+}
+
+model Alert {
+  id                   String        @id @default(uuid())
+  orgId                String
+  ruleId               String?
+  title                String
+  message              String
+  severity             AlertSeverity @default(WARNING)
+  targetType           String        // AP, CONTROLLER, SSID, RADIUS
+  targetId             String
+  status               AlertStatus   @default(ACTIVE)
+  acknowledgedByUserId String?
+  triggeredAt          DateTime      @default(now())
+  resolvedAt           DateTime?
+
+  organization   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  rule           AlertRule?   @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  acknowledgedBy User?        @relation("AcknowledgedByUser", fields: [acknowledgedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([orgId, status])
+  @@map("alerts")
+}
+
+model FirmwareImage {
+  id           String     @id @default(uuid())
+  vendor       VendorType
+  model        String
+  version      String
+  fileName     String
+  fileSizeBytes BigInt
+  checksumSha256 String
+  releaseDate  DateTime?
+  uploadedAt   DateTime   @default(now())
+
+  @@unique([vendor, model, version])
+  @@map("firmware_images")
+}
