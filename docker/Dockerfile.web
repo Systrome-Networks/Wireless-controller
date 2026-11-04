@@ -1,0 +1,40 @@
+# Stage 1: Build React SPA
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy root manifests and workspace package manifests
+COPY package*.json ./
+COPY tsconfig.base.json ./
+COPY packages/types/package*.json ./packages/types/
+COPY apps/web/package*.json ./apps/web/
+
+# Install dependencies across all workspaces
+RUN npm install
+
+# Copy source code
+COPY packages/types ./packages/types
+COPY apps/web ./apps/web
+
+# Build @wac/types and @wac/web
+RUN npm run build --workspace=@wac/types
+RUN npm run build --workspace=@wac/web
+
+# Stage 2: Production NGINX server
+FROM nginx:alpine
+
+# Remove default nginx static files
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copy compiled static bundle from builder
+COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
+
+# Copy custom Nginx configuration with reverse proxy for /api and /ws
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+
+EXPOSE 80
+
+HEALTHCHECK --interval=15s --timeout=5s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:80/ || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]

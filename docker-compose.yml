@@ -1,0 +1,136 @@
+services:
+  # ============================================================================
+  # 1. DATABASE: PostgreSQL 16 (Multi-Tenancy, Inventory, AAA SQL)
+  # ============================================================================
+  db:
+    image: postgres:16-alpine
+    container_name: wac-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-wac}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-wac_secret_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-wac_db}
+    volumes:
+      - wac_pgdata:/var/lib/postgresql/data
+    ports:
+      - "${PORT_DB:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-wac} -d ${POSTGRES_DB:-wac_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - wac_net
+
+  # ============================================================================
+  # 2. CACHE & PUB/SUB: Redis 7 (Telemetry, Locks, Realtime Stream)
+  # ============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: wac-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - wac_redisdata:/data
+    ports:
+      - "${PORT_REDIS:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - wac_net
+
+  # ============================================================================
+  # 3. BACKEND: WAC API Gateway & WebSocket Hub (Node 20 + Prisma)
+  # ============================================================================
+  backend:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.server
+    container_name: wac-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-wac}:${POSTGRES_PASSWORD:-wac_secret_2026}@db:5432/${POSTGRES_DB:-wac_db}?schema=public
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-wac_super_secure_enterprise_jwt_secret_2026_xyz!}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-wac_refresh_token_secret_key_2026_abc!}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      CORS_ORIGIN: "*"
+    ports:
+      - "${PORT_API:-4000}:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:4000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - wac_net
+
+  # ============================================================================
+  # 4. FRONTEND: React SPA Dashboard + NGINX Reverse Proxy
+  # ============================================================================
+  frontend:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.web
+    container_name: wac-frontend
+    restart: unless-stopped
+    ports:
+      - "${PORT_WEB:-3000}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:80/ || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - wac_net
+
+  # ============================================================================
+  # 5. AAA ENGINE: FreeRADIUS 3.0 (802.1X, MAB, PostgreSQL Driver, RFC 5176 CoA)
+  # ============================================================================
+  freeradius:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.freeradius
+    container_name: wac-freeradius
+    restart: unless-stopped
+    ports:
+      - "${PORT_RADIUS_AUTH:-1812}:1812/udp"
+      - "${PORT_RADIUS_ACCT:-1813}:1813/udp"
+      - "${PORT_RADIUS_COA:-3799}:3799/udp"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - wac_net
+
+# ==============================================================================
+# Persistent Volumes
+# ==============================================================================
+volumes:
+  wac_pgdata:
+    driver: local
+  wac_redisdata:
+    driver: local
+
+# ==============================================================================
+# Overlay Network
+# ==============================================================================
+networks:
+  wac_net:
+    driver: bridge

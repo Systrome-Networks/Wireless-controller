@@ -1,0 +1,55 @@
+# Stage 1: Build TypeScript packages and server
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Install native dependencies for building bcrypt and Prisma engine binaries
+RUN apk add --no-cache python3 make g++ openssl
+
+# Copy root manifests and workspace package manifests
+COPY package*.json ./
+COPY tsconfig.base.json ./
+COPY packages/types/package*.json ./packages/types/
+COPY packages/database/package*.json ./packages/database/
+COPY apps/server/package*.json ./apps/server/
+
+# Install dependencies across all workspaces
+RUN npm install
+
+# Copy source code
+COPY packages/types ./packages/types
+COPY packages/database ./packages/database
+COPY apps/server ./apps/server
+
+# Generate Prisma ORM client
+RUN npm run db:generate
+
+# Build all TypeScript packages
+RUN npm run build --workspace=@wac/types
+RUN npm run build --workspace=@wac/database
+RUN npm run build --workspace=@wac/server
+
+# Stage 2: Minimal Production Runtime
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+# Install runtime dependencies: OpenSSL for Prisma and wget/curl for healthchecks
+RUN apk add --no-cache openssl wget curl
+
+ENV NODE_ENV=production
+ENV PORT=4000
+
+# Copy full application from builder (including compiled dist and node_modules)
+COPY --from=builder /app /app
+
+# Copy container entrypoint script
+COPY docker/entrypoint.server.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 4000
+
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:4000/health || exit 1
+
+ENTRYPOINT ["/entrypoint.sh"]

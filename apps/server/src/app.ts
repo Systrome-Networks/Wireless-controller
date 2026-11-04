@@ -22,6 +22,11 @@ export function createApp(): Express {
     app.use(morgan('combined'));
   }
 
+  // Root health probe
+  app.get('/health', (_req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
   // Mount API v1
   app.use('/api/v1', apiV1Router);
 

@@ -1,0 +1,15 @@
+FROM freeradius/freeradius-server:3.0.25
+
+# Copy custom clients configuration
+COPY docker/freeradius/clients.conf /etc/freeradius/clients.conf
+
+# Copy PostgreSQL SQL module configuration and enable module
+COPY docker/freeradius/sql.conf /etc/freeradius/mods-available/sql
+RUN ln -sf /etc/freeradius/mods-available/sql /etc/freeradius/mods-enabled/sql
+
+# Enable SQL in default site
+RUN sed -i 's/-sql/sql/g' /etc/freeradius/sites-available/default || true
+
+EXPOSE 1812/udp 1813/udp 3799/udp
+
+CMD ["freeradius", "-f", "-l", "stdout"]
