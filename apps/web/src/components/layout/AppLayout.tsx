@@ -23,11 +23,11 @@ export const AppLayout: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen w-screen bg-slate-950 overflow-hidden text-slate-100 font-sans">
+    <div className="flex h-screen w-screen bg-slate-50 dark:bg-slate-950 overflow-hidden text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200">
       <Sidebar />
       <div className="flex flex-col flex-1 min-w-0">
         <Header />
-        <main className="flex-1 p-6 overflow-y-auto bg-slate-950/60">
+        <main className="flex-1 p-6 overflow-y-auto bg-slate-100/70 dark:bg-slate-950/60 transition-colors duration-200">
           <Outlet />
         </main>
       </div>

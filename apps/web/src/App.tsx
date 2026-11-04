@@ -5,6 +5,13 @@ import { ThemeProvider } from './context/ThemeContext.js';
 import { AppLayout } from './components/layout/AppLayout.js';
 import { LoginPage } from './pages/LoginPage.js';
 import { DashboardPage } from './pages/DashboardPage.js';
+import { AccessPointsPage } from './pages/AccessPointsPage.js';
+import { ControllersPage } from './pages/ControllersPage.js';
+import { WirelessSsidsPage } from './pages/WirelessSsidsPage.js';
+import { ConfigEnginePage } from './pages/ConfigEnginePage.js';
+import { DiscoveryPage } from './pages/DiscoveryPage.js';
+import { MonitoringRfPage } from './pages/MonitoringRfPage.js';
+import { RadiusAaaPage } from './pages/RadiusAaaPage.js';
 import { SitesPage } from './pages/SitesPage.js';
 import { UsersPage } from './pages/UsersPage.js';
 import { AuditLogsPage } from './pages/AuditLogsPage.js';
@@ -19,18 +26,16 @@ export const App: React.FC = () => {
 
             <Route element={<AppLayout />}>
               <Route path="/" element={<DashboardPage />} />
+              <Route path="/access-points" element={<AccessPointsPage />} />
+              <Route path="/controllers" element={<ControllersPage />} />
+              <Route path="/ssids" element={<WirelessSsidsPage />} />
+              <Route path="/configurations" element={<ConfigEnginePage />} />
+              <Route path="/discovery" element={<DiscoveryPage />} />
+              <Route path="/monitoring" element={<MonitoringRfPage />} />
+              <Route path="/aaa" element={<RadiusAaaPage />} />
               <Route path="/sites" element={<SitesPage />} />
               <Route path="/users" element={<UsersPage />} />
               <Route path="/audit-logs" element={<AuditLogsPage />} />
-
-              {/* Placeholder routes for next phases */}
-              <Route path="/access-points" element={<DashboardPage />} />
-              <Route path="/controllers" element={<DashboardPage />} />
-              <Route path="/ssids" element={<DashboardPage />} />
-              <Route path="/configurations" element={<DashboardPage />} />
-              <Route path="/discovery" element={<DashboardPage />} />
-              <Route path="/monitoring" element={<DashboardPage />} />
-              <Route path="/aaa" element={<DashboardPage />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />

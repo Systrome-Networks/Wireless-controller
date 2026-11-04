@@ -30,15 +30,15 @@ const navigation = [
 
 export const Sidebar: React.FC = () => {
   return (
-    <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0">
+    <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-colors duration-200">
       {/* Brand Header */}
-      <div className="h-16 px-6 flex items-center gap-3 border-b border-slate-800">
+      <div className="h-16 px-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
         <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-500/20">
           W
         </div>
         <div>
-          <h1 className="font-bold text-white text-base tracking-tight leading-none">WAC Central</h1>
-          <span className="text-[10px] text-blue-400 font-medium uppercase tracking-wider">Multi-Vendor Controller</span>
+          <h1 className="font-bold text-slate-900 dark:text-white text-base tracking-tight leading-none">WAC Central</h1>
+          <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium uppercase tracking-wider">Multi-Vendor Controller</span>
         </div>
       </div>
 
@@ -53,8 +53,8 @@ export const Sidebar: React.FC = () => {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-blue-600/15 text-blue-400 border border-blue-500/30'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    ? 'bg-blue-50 dark:bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60'
                 }`
               }
             >
@@ -66,9 +66,9 @@ export const Sidebar: React.FC = () => {
       </nav>
 
       {/* Footer Info */}
-      <div className="p-4 border-t border-slate-800 text-xs text-slate-500">
+      <div className="p-4 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
         <div>Enterprise WAC v1.0.0</div>
-        <div className="text-[10px] text-slate-600">RFC 5415 • CAPWAP • FreeRADIUS</div>
+        <div className="text-[10px] text-slate-400 dark:text-slate-600">RFC 5415 • CAPWAP • FreeRADIUS</div>
       </div>
     </aside>
   );
