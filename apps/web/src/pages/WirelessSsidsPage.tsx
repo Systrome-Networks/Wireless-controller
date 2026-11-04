@@ -168,7 +168,7 @@ export const WirelessSsidsPage: React.FC = () => {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Acme-HQ-Secure"
+                  placeholder="e.g. Systrome-HQ-Secure"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"

@@ -8,14 +8,22 @@ async function main() {
 
   // 1. Create Organization
   const org = await prisma.organization.upsert({
-    where: { slug: 'acme-corp' },
-    update: {},
-    create: {
-      name: 'Acme Global Networks',
-      slug: 'acme-corp',
-      description: 'Enterprise Enterprise Campus and Remote Branches',
+    where: { slug: 'systrome-networks' },
+    update: {
+      name: 'Systrome Networks',
+      description: 'Systrome Networks Enterprise Campus and Remote Branches',
       settings: {
-        alertNotificationsEmail: 'alerts@acme.com',
+        alertNotificationsEmail: 'alerts@systrome.com',
+        snmpDefaultCommunity: 'public',
+        syslogServer: '10.10.1.50:514',
+      },
+    },
+    create: {
+      name: 'Systrome Networks',
+      slug: 'systrome-networks',
+      description: 'Systrome Networks Enterprise Campus and Remote Branches',
+      settings: {
+        alertNotificationsEmail: 'alerts@systrome.com',
         snmpDefaultCommunity: 'public',
         syslogServer: '10.10.1.50:514',
       },
@@ -66,12 +74,12 @@ async function main() {
   const passwordHash = await bcrypt.hash('Admin123!@#', 10);
   const usersData = [
     { email: 'admin@wac.network', name: 'Master Super Administrator', role: UserRole.SUPER_ADMIN },
-    { email: 'orgadmin@acme.com', name: 'Sarah Connor (Org Admin)', role: UserRole.ORG_ADMIN },
-    { email: 'netadmin@acme.com', name: 'Alex Murphy (Network Admin)', role: UserRole.NETWORK_ADMIN },
-    { email: 'wireless@acme.com', name: 'Miles Dyson (Wireless Admin)', role: UserRole.WIRELESS_ADMIN },
-    { email: 'security@acme.com', name: 'Ellen Ripley (Security Admin)', role: UserRole.SECURITY_ADMIN },
-    { email: 'operator@acme.com', name: 'John Matrix (NOC Operator)', role: UserRole.OPERATOR },
-    { email: 'auditor@acme.com', name: 'Arthur Dent (Auditor)', role: UserRole.AUDITOR },
+    { email: 'orgadmin@systrome.com', name: 'Sarah Connor (Org Admin)', role: UserRole.ORG_ADMIN },
+    { email: 'netadmin@systrome.com', name: 'Alex Murphy (Network Admin)', role: UserRole.NETWORK_ADMIN },
+    { email: 'wireless@systrome.com', name: 'Miles Dyson (Wireless Admin)', role: UserRole.WIRELESS_ADMIN },
+    { email: 'security@systrome.com', name: 'Ellen Ripley (Security Admin)', role: UserRole.SECURITY_ADMIN },
+    { email: 'operator@systrome.com', name: 'John Matrix (NOC Operator)', role: UserRole.OPERATOR },
+    { email: 'auditor@systrome.com', name: 'Arthur Dent (Auditor)', role: UserRole.AUDITOR },
   ];
 
   for (const u of usersData) {
@@ -193,7 +201,7 @@ async function main() {
   const ssidCorp = await prisma.ssid.create({
     data: {
       orgId: org.id,
-      name: 'Acme-Corp-Secure',
+      name: 'Systrome-Corp-Secure',
       enabled: true,
       broadcastSsid: true,
       securityType: SecurityType.WPA2_ENTERPRISE,
@@ -212,7 +220,7 @@ async function main() {
   const ssidGuest = await prisma.ssid.create({
     data: {
       orgId: org.id,
-      name: 'Acme-Guest',
+      name: 'Systrome-Guest',
       enabled: true,
       broadcastSsid: true,
       securityType: SecurityType.WPA2_PERSONAL,
@@ -230,7 +238,7 @@ async function main() {
   const ssidIot = await prisma.ssid.create({
     data: {
       orgId: org.id,
-      name: 'Acme-IoT-Sensors',
+      name: 'Systrome-IoT-Sensors',
       enabled: true,
       broadcastSsid: false,
       securityType: SecurityType.WPA2_PERSONAL,

@@ -14,7 +14,7 @@ export const Header: React.FC = () => {
         <div className="flex items-center gap-2">
           <span className="text-xs text-slate-500 dark:text-slate-400">Org:</span>
           <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800/80 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700">
-            {user?.orgName || 'Acme Global Networks'}
+            {user?.orgName || 'Systrome Networks'}
           </span>
         </div>
 
