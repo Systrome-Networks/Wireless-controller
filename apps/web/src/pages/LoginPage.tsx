@@ -28,18 +28,18 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-screen flex items-center justify-center bg-slate-950 p-4">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-xl p-8 shadow-2xl">
+    <div className="min-h-screen w-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4 transition-colors duration-200">
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 shadow-xl">
         <div className="flex flex-col items-center mb-8">
           <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-2xl shadow-xl shadow-blue-500/25 mb-3">
             W
           </div>
-          <h1 className="text-xl font-bold text-white tracking-tight">Enterprise Wireless Access Controller</h1>
-          <p className="text-xs text-slate-400 mt-1">Multi-Vendor Infrastructure Management</p>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Enterprise Wireless Access Controller</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Multi-Vendor Infrastructure Management</p>
         </div>
 
         {error && (
-          <div className="mb-6 p-3 rounded-lg bg-red-950/50 border border-red-800/80 flex items-center gap-3 text-red-300 text-sm">
+          <div className="mb-6 p-3 rounded-lg bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800/80 flex items-center gap-3 text-red-600 dark:text-red-300 text-sm">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
@@ -47,7 +47,7 @@ export const LoginPage: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               Email / Username
             </label>
             <input
@@ -55,13 +55,13 @@ export const LoginPage: React.FC = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-3.5 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full px-3.5 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:border-blue-500 transition-colors"
               placeholder="admin@wac.network"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               Password
             </label>
             <input
@@ -69,7 +69,7 @@ export const LoginPage: React.FC = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-3.5 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full px-3.5 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:border-blue-500 transition-colors"
               placeholder="••••••••••••"
             />
           </div>
@@ -93,8 +93,8 @@ export const LoginPage: React.FC = () => {
           </button>
         </form>
 
-        <div className="mt-8 pt-6 border-t border-slate-800/80 text-center">
-          <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
+        <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800/80 text-center">
+          <div className="flex items-center justify-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <Shield className="w-3.5 h-3.5 text-blue-500" />
             <span>Secured with JWT, Role-Based Access & TLS</span>
           </div>
