@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Systrome Native AP Architecture & Management Specification</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 14mm 18mm 14mm;
+      @bottom-right {
+        content: counter(page);
+        font-size: 9pt;
+        color: #64748b;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.55;
+      color: #1e293b;
+      background-color: #ffffff;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Cover / Header section */
+    .header-banner {
+      border-bottom: 3px solid #2563eb;
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+    }
+
+    .brand-tag {
+      display: inline-block;
+      background: #2563eb;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 8pt;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: 22pt;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 8px 0 6px 0;
+      letter-spacing: -0.02em;
+    }
+
+    .sub-title {
+      font-size: 12pt;
+      color: #475569;
+      margin-bottom: 14px;
+      font-weight: 400;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 9pt;
+    }
+
+    .meta-item strong {
+      display: block;
+      color: #64748b;
+      font-size: 7.5pt;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .meta-item span {
+      color: #0f172a;
+      font-weight: 600;
+    }
+
+    /* Headings */
+    h2 {
+      font-size: 14pt;
+      font-weight: 700;
+      color: #0f172a;
+      border-bottom: 1.5px solid #e2e8f0;
+      padding-bottom: 6px;
+      margin-top: 28px;
+      margin-bottom: 12px;
+      page-break-after: avoid;
+    }
+
+    h3 {
+      font-size: 11.5pt;
+      font-weight: 700;
+      color: #1e3a8a;
+      margin-top: 18px;
+      margin-bottom: 8px;
+      page-break-after: avoid;
+    }
+
+    p {
+      margin: 0 0 10px 0;
+      text-align: justify;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 18px 0;
+      font-size: 9pt;
+      page-break-inside: avoid;
+    }
+
+    th {
+      background-color: #1e293b;
+      color: #ffffff;
+      font-weight: 600;
+      text-align: left;
+      padding: 7px 10px;
+      border: 1px solid #334155;
+    }
+
+    td {
+      padding: 6px 10px;
+      border: 1px solid #e2e8f0;
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) td {
+      background-color: #f8fafc;
+    }
+
+    /* Code Blocks */
+    pre {
+      background: #0f172a;
+      color: #f1f5f9;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 8pt;
+      line-height: 1.45;
+      padding: 10px 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 10px 0 14px 0;
+      border: 1px solid #334155;
+      page-break-inside: avoid;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 8.5pt;
+      background: #f1f5f9;
+      color: #0f172a;
+      padding: 1px 4px;
+      border-radius: 3px;
+      border: 1px solid #e2e8f0;
+    }
+
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border: none;
+    }
+
+    /* Callouts */
+    .callout {
+      border-left: 4px solid #2563eb;
+      background: #eff6ff;
+      padding: 10px 14px;
+      margin: 12px 0;
+      border-radius: 0 6px 6px 0;
+      font-size: 9.5pt;
+      page-break-inside: avoid;
+    }
+
+    .callout strong {
+      color: #1e40af;
+    }
+
+    .callout-warning {
+      border-left-color: #f59e0b;
+      background: #fffbeb;
+    }
+
+    .callout-warning strong {
+      color: #b45309;
+    }
+
+    .callout-success {
+      border-left-color: #10b981;
+      background: #ecfdf5;
+    }
+
+    .callout-success strong {
+      color: #047857;
+    }
+
+    /* Diagrams & ASCII boxes */
+    .diagram-box {
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 12px;
+      margin: 14px 0;
+      font-family: ui-monospace, monospace;
+      font-size: 7.5pt;
+      line-height: 1.35;
+      color: #0f172a;
+      white-space: pre;
+      overflow-x: auto;
+      page-break-inside: avoid;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 9999px;
+      font-size: 7.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .badge-ready { background: #dcfce7; color: #166534; }
+    .badge-planned { background: #fef3c7; color: #92400e; }
+    .badge-secondary { background: #e2e8f0; color: #475569; }
+
+    .page-break {
+      page-break-before: always;
+    }
+
+    ul, ol {
+      margin: 0 0 12px 0;
+      padding-left: 20px;
+    }
+
+    li {
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cover / Header -->
+  <div class="header-banner">
+    <div class="brand-tag">Systrome Networks Enterprise Engineering</div>
+    <h1>Systrome Native AP Architecture & Management Specification</h1>
+    <div class="sub-title">Centralized Wireless Access Controller (WAC) &bull; Edge MQTT Control Plane &bull; Decoupled Data Plane</div>
+    
+    <div class="meta-grid">
+      <div class="meta-item">
+        <strong>Document Version</strong>
+        <span>2.0.0 (Production Blueprint)</span>
+      </div>
+      <div class="meta-item">
+        <strong>Target Ecosystem</strong>
+        <span>Systrome APs & Multi-Vendor WAC</span>
+      </div>
+      <div class="meta-item">
+        <strong>Primary Protocol</strong>
+        <span>MQTT over TLS + OpenWrt UCI</span>
+      </div>
+      <div class="meta-item">
+        <strong>Date & Classification</strong>
+        <span>November 2026 &bull; Enterprise Confidential</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 1 -->
+  <h2>1. Executive Summary &amp; Strategic Focus</h2>
+  <p>
+    While the Systrome Wireless Access Controller (WAC) supports heterogeneous multi-vendor infrastructure (Cisco, Aruba, TP-Link Omada, Ubiquiti UniFi, and Ruijie), <strong>native Systrome Wireless Access Points are the Tier-1 first-class citizen of the platform</strong>.
+  </p>
+  <p>
+    By tailoring a modern, open, and lightweight communication protocol directly to Systrome AP hardware and firmware (running OpenWrt / Systrome OS), we achieve four distinct operational advantages:
+  </p>
+  <ul>
+    <li><strong>Zero-Touch Provisioning (ZTP)</strong>: Brand-new APs boot from factory, auto-discover the WAC, authenticate via cryptographic certificates, and self-configure with zero manual intervention.</li>
+    <li><strong>Sub-Second Real-Time Telemetry &amp; Observability</strong>: Real-time channel utilization, client roaming, RF spectrum noise, and instant offline alerts via <strong>MQTT Pub/Sub</strong>.</li>
+    <li><strong>Declarative Device-Twin Configuration</strong>: A GitOps-style "Desired State vs. Reported State" engine with transactional validation, safe-mode watchdog, and automatic rollback to prevent branch lockouts.</li>
+    <li><strong>Decoupled Control &amp; Data Planes</strong>: Control and orchestration use lightweight MQTT over TLS, while client data traffic uses either high-speed <strong>Local Bridging (Direct Breakout)</strong> or scalable <strong>VXLAN/WireGuard tunnels</strong> for centralized corporate policies.</li>
+  </ul>
+
+  <!-- Section 2 -->
+  <h2>2. Technology Evaluation: SNMP vs. CAPWAP vs. MQTT vs. WebSockets</h2>
+  <p>
+    Network architects frequently evaluate whether traditional carrier protocols (<strong>CAPWAP</strong>, <strong>SNMP</strong>) or modern edge IoT protocols (<strong>MQTT</strong>, <strong>WebSockets</strong>) should govern the AP fleet. Below is an exhaustive engineering comparison:
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 22%;">Evaluation Dimension</th>
+        <th style="width: 26%;">SNMP (v2c / v3)</th>
+        <th style="width: 26%;">CAPWAP (RFC 5415/5416)</th>
+        <th style="width: 26%;">MQTT over TLS (Selected)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Communication Model</strong></td>
+        <td>Inbound Request/Response polling + UDP Traps</td>
+        <td>State-machine Client/Server over UDP</td>
+        <td><strong>Asynchronous Pub/Sub Message Broker</strong></td>
+      </tr>
+      <tr>
+        <td><strong>Transport &amp; Ports</strong></td>
+        <td>UDP 161 (Poll), UDP 162 (Trap)</td>
+        <td>UDP 5246 (Control), UDP 5247 (Data)</td>
+        <td><strong>TCP 8883 (MQTTS) or TCP 1883</strong></td>
+      </tr>
+      <tr>
+        <td><strong>NAT &amp; Firewall Traversal</strong></td>
+        <td><strong>Extremely Poor</strong>: Controller cannot poll an AP behind a NAT gateway without public IP or VPN.</td>
+        <td><strong>Fragile</strong>: Stateful firewalls drop UDP keepalives; severe Path MTU (PMTU) &amp; fragmentation drops.</td>
+        <td><strong>Native &amp; Flawless</strong>: AP initiates an outbound TCP TLS session to broker. Works seamlessly behind NAT, CGNAT, 4G/5G WAN.</td>
+      </tr>
+      <tr>
+        <td><strong>Configuration Delivery</strong></td>
+        <td><strong>Inadequate</strong>: SNMP <code>SET</code> lacks transactional multi-object consistency, schema validation, and rollbacks.</td>
+        <td><strong>Complex &amp; Rigid</strong>: Proprietary vendor TLVs; rigid binary byte structures; difficult to extend.</td>
+        <td><strong>Declarative JSON</strong>: Clean JSON payloads applied transactionally to OpenWrt <code>/etc/config/</code> via <code>uci</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Telemetry &amp; Metrics Latency</strong></td>
+        <td><strong>High Latency (1–5 min)</strong>: Periodic polling of 1,000 APs overloads controller CPU and network bandwidth.</td>
+        <td><strong>Bundled</strong>: Integrated into keepalive packets; inflexible schema changes.</td>
+        <td><strong>Sub-Second Stream</strong>: AP streams radio utilization, client stats, and RF noise floor at customizable intervals.</td>
+      </tr>
+      <tr>
+        <td><strong>Offline Detection</strong></td>
+        <td><strong>Slow</strong>: Detects failure only after multiple poll timeouts (3–10 minutes).</td>
+        <td><strong>Moderate</strong>: Echo interval timeouts (15–30 seconds).</td>
+        <td><strong>Instant (&lt; 1 sec)</strong>: <strong>Last Will and Testament (LWT)</strong> automatically triggered by broker upon socket disconnect.</td>
+      </tr>
+      <tr>
+        <td><strong>AP RAM &amp; CPU Footprint</strong></td>
+        <td>Low (<code>snmpd</code> daemon).</td>
+        <td>High (Complex DTLS crypto engine, packet fragmentation buffers).</td>
+        <td><strong>Ultra-Low (&lt; 4 MB RAM)</strong>: Minimal C/Go/Python agent footprint; runs on low-cost MIPS/ARM APs.</td>
+      </tr>
+      <tr>
+        <td><strong>Data Plane Encapsulation</strong></td>
+        <td>None (Management only).</td>
+        <td>Integrated UDP 5247 Split-MAC tunnel.</td>
+        <td><strong>Decoupled</strong>: Local Breakout by default; pair with <strong>VXLAN / WireGuard</strong> for centralized tunneling.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>Architectural Decision for Systrome Wireless</strong>:  
+    MQTT over TLS is selected as the primary Control &amp; Monitoring plane for all Systrome APs. Data forwarding is decoupled via Local VLAN Breakout (wire-speed switching on the AP) with optional VXLAN/WireGuard tunnels for centralized campus isolation. Native 802.1X/RADIUS (FreeRADIUS) on UDP 1812/1813 handles authentication directly between AP <code>hostapd</code> and the WAC AAA cluster.
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- Section 3 -->
+  <h2>3. End-to-End System Topology</h2>
+  <div class="diagram-box">
++---------------------------------------------------------------------------------------------------+
+|                                   SYSTROME WAC CONTROLLER PLANE                                   |
+|   +------------------------+    +------------------------+    +-------------------------------+   |
+|   |    Web UI Dashboard    |    |  API & WebSocket Hub   |    |      PostgreSQL 16 Database   |   |
+|   +-----------+------------+    +-----------+------------+    +---------------+---------------+   |
+|               |                             |                                 |                   |
+|               +-----------------------+     |                                 |                   |
+|                                       v     v                                 |                   |
+|                          +----------------------------+                       |                   |
+|                          |   Systrome MQTT Broker     |<----------------------+                   |
+|                          |   (Mosquitto / EMQX TLS)   |                                           |
+|                          +--------------+-------------+                                           |
++-----------------------------------------|---------------------------------------------------------+
+                                          | MQTTS (TCP 8883) Outbound Encrypted Session
+                                          v
++---------------------------------------------------------------------------------------------------+
+|                              SYSTROME NATIVE ACCESS POINT (OpenWrt / Linux)                       |
+|                                                                                                   |
+|   +-------------------------------------------------------------------------------------------+   |
+|   |                       systrome-agent (C / Go / Python lightweight daemon)                 |   |
+|   +-------------+-----------------------------+-------------------------------+---------------+   |
+|                 |                             |                               |                   |
+|                 v                             v                               v                   |
+|         +---------------+             +---------------+               +---------------+           |
+|         |  OpenWrt uci  |             |  OpenWrt ubus |               |    hostapd    |           |
+|         | Config System |             | System Bus    |               | 802.11 Engine |           |
+|         +---------------+             +---------------+               +---------------+           |
+|                 |                             |                               |                   |
+|                 v                             v                               v                   |
+|         /etc/config/wireless           iwinfo / netifd                2.4 / 5 / 6 GHz Radios      |
++---------------------------------------------------------------------------------------------------+</div>
+
+  <!-- Section 4 -->
+  <h2>4. Core Operational Flows &amp; Device Lifecycle</h2>
+
+  <h3>4.1. Zero-Touch Provisioning (ZTP) &amp; AP Onboarding</h3>
+  <ol>
+    <li><strong>Power On &amp; Network Acquisition</strong>: AP connects to PoE switch, obtains IP address and DHCP Option 43 (specifying <code>wac.systrome.net</code> or MQTT broker IP). If Option 43 is omitted, it falls back to DNS resolution.</li>
+    <li><strong>Cryptographic TLS Session</strong>: AP initiates an outbound TLS handshake on port 8883 using its factory-burned x509 client certificate.</li>
+    <li><strong>LWT Registration</strong>: During the MQTT connect packet, the agent sets its Last Will and Testament:
+      <pre>systrome/ap/{mac}/status -> {"state": "OFFLINE", "reason": "CONNECTION_LOST"}</pre>
+    </li>
+    <li><strong>Registration Announce</strong>: AP publishes hardware inventory:
+      <pre>systrome/ap/{mac}/status -> {"state": "JOINING", "model": "SAP-6000AX", "firmware": "v2.1.4"}</pre>
+    </li>
+    <li><strong>WAC Registration &amp; Provisioning</strong>: WAC creates/updates the AP record in PostgreSQL, assigns the AP Group profile, pushes the desired configuration, and transitions state to <code>ONLINE</code>.</li>
+  </ol>
+
+  <h3>4.2. Declarative Device Twin Configuration Flow</h3>
+  <p>
+    The WAC never issues blind bash scripts. Instead, it follows the industry-standard <strong>Device Twin</strong> pattern:
+  </p>
+  <div class="diagram-box">
+  [Administrator edits SSID in UI]
+                 │
+                 ▼
+  [WAC Core generates JSON delta]
+                 │
+                 ▼ (Publish QoS 1 to systrome/ap/{mac}/config/desired)
+  [systrome-agent receives desired configuration]
+                 │
+                 ├── Validate JSON schema against hardware capabilities
+                 ├── Backup current UCI files to /tmp/backup_cfg
+                 ├── Apply parameters: uci set wireless.@wifi-iface[...]
+                 ├── Commit & Reload: uci commit && wifi reload
+                 │
+                 ▼
+  [Safe-Mode Watchdog Timer (45 seconds)]
+                 ├── Ping WAC MQTT broker over WAN
+                 │      ├── SUCCESS -> Commit config, publish IN_SYNC to config/reported
+                 │      └── FAILURE -> Revert from /tmp/backup_cfg && wifi reload (Auto Rollback!)</div>
+
+  <h3>4.3. Real-Time Telemetry &amp; Event Stream</h3>
+  <ul>
+    <li><strong>Periodic Metrics (every 30s)</strong>: Ingested on <code>systrome/ap/{mac}/telemetry</code> containing CPU usage, RAM utilization, board temperature, per-radio channel utilization (%), noise floor (dBm), and active client SNR.</li>
+    <li><strong>Asynchronous Events (Instant)</strong>: Ingested on <code>systrome/ap/{mac}/events</code> containing 802.11 client association/disassociation, 802.11k/v/r fast roams, 5 GHz DFS radar strikes, and rogue BSSID alarms.</li>
+  </ul>
+
+  <h3>4.4. Dual-Bank Safe FOTA Firmware Upgrades</h3>
+  <p>
+    Systrome APs utilize dual-bank A/B flash partitions. The WAC sends an RPC upgrade command specifying binary URL and SHA-256 hash. The AP writes to the inactive bank, sets U-Boot counter to 3, and reboots. If the new image connects to WAC within 120s, the partition is committed permanently; if it crashes, hardware watchdog reboots back into the previous known-good bank!
+  </p>
+
+  <div class="page-break"></div>
+
+  <!-- Section 5 -->
+  <h2>5. Systrome MQTT Topic &amp; Protocol Specification</h2>
+
+  <h3>5.1. Topic Hierarchy</h3>
+  <pre>systrome/
+  └── ap/
+      └── {mac_address}/                     # e.g., systrome/ap/00:1A:2B:3C:4D:5E/
+          ├── status                         # Retained: AP Lifecycle (ONLINE, OFFLINE, JOINING)
+          ├── telemetry                      # Periodic: Radios, CPU, RAM, Client summaries
+          ├── events                         # Asynchronous: Client joins, roams, radar, rogue APs
+          ├── config/
+          │   ├── desired                    # Controller -> AP: Target configuration payload
+          │   └── reported                   # AP -> Controller: Applied state & config hash
+          └── rpc/
+              ├── request                    # Controller -> AP: Instant actions (reboot, blink, pcap)
+              └── response                   # AP -> Controller: Command execution result</pre>
+
+  <h3>5.2. Telemetry Payload Example (<code>systrome/ap/{mac}/telemetry</code>)</h3>
+  <pre>{
+  "mac": "00:1A:2B:3C:4D:5E",
+  "system": {
+    "cpuUsagePercent": 14.5,
+    "memoryUsagePercent": 42.1,
+    "temperatureCelsius": 48.0,
+    "freeFlashBytes": 84213760
+  },
+  "radios": [
+    {
+      "radioIndex": 0,
+      "band": "BAND_2_4GHZ",
+      "channel": 6,
+      "channelWidth": 20,
+      "txPowerDbm": 18,
+      "utilizationPercent": 34.0,
+      "noiseFloorDbm": -94,
+      "clientCount": 18,
+      "txBytes": 104857600,
+      "rxBytes": 482104000
+    },
+    {
+      "radioIndex": 1,
+      "band": "BAND_5GHZ",
+      "channel": 36,
+      "channelWidth": 80,
+      "txPowerDbm": 22,
+      "utilizationPercent": 18.5,
+      "noiseFloorDbm": -98,
+      "clientCount": 42,
+      "txBytes": 892340000,
+      "rxBytes": 2490120000
+    }
+  ],
+  "timestamp": "2026-11-20T10:30:30Z"
+}</pre>
+
+  <h3>5.3. Desired Configuration Payload Example (<code>systrome/ap/{mac}/config/desired</code>)</h3>
+  <pre>{
+  "configVersion": 42,
+  "configHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "radios": [
+    { "radioIndex": 0, "enabled": true, "channel": 1, "channelWidth": 20, "txPowerDbm": 16 },
+    { "radioIndex": 1, "enabled": true, "channel": 44, "channelWidth": 80, "txPowerDbm": 20 }
+  ],
+  "ssids": [
+    {
+      "name": "Systrome-Corporate",
+      "enabled": true,
+      "security": "WPA2_ENTERPRISE",
+      "vlanId": 100,
+      "clientIsolation": false,
+      "bandSteering": true,
+      "radius": { "primaryIp": "10.10.1.10", "port": 1812, "secret": "RadiusSecretKey123" }
+    },
+    {
+      "name": "Systrome-Guest",
+      "enabled": true,
+      "security": "WPA2_PERSONAL",
+      "passphrase": "WelcomeGuest2026!",
+      "vlanId": 200,
+      "clientIsolation": true,
+      "rateLimitDownKbps": 10000,
+      "rateLimitUpKbps": 5000
+    }
+  ]
+}</pre>
+
+  <div class="page-break"></div>
+
+  <!-- Section 6 -->
+  <h2>6. Feature Matrix: Current State vs. What to Build Next</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 25%;">Feature Domain</th>
+        <th style="width: 30%;">Feature Name</th>
+        <th style="width: 15%;">Status</th>
+        <th style="width: 30%;">Next Steps for Systrome APs</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Fleet Inventory</strong></td>
+        <td>Multi-vendor AP Inventory Table</td>
+        <td><span class="badge badge-ready">Ready</span></td>
+        <td>Add Systrome Native badges &amp; direct MQTT connection status pill.</td>
+      </tr>
+      <tr>
+        <td><strong>Identity &amp; Tenancy</strong></td>
+        <td>Multi-Tenancy (Org, Site, Building, Floor)</td>
+        <td><span class="badge badge-ready">Ready</span></td>
+        <td>Auto-associate Systrome APs to Sites/Floors via MAC OUI during ZTP.</td>
+      </tr>
+      <tr>
+        <td><strong>AAA / RADIUS</strong></td>
+        <td>802.1X, MAB, FreeRADIUS PostgreSQL Driver</td>
+        <td><span class="badge badge-ready">Ready</span></td>
+        <td>Pre-configure Systrome AP SSIDs to point to WAC FreeRADIUS container.</td>
+      </tr>
+      <tr>
+        <td><strong>SSID Management</strong></td>
+        <td>WPA2/WPA3 Personal/Enterprise, VLAN Tags</td>
+        <td><span class="badge badge-ready">Ready</span></td>
+        <td>Generate OpenWrt UCI JSON payloads from the existing SSID forms.</td>
+      </tr>
+      <tr>
+        <td><strong>Config Engine</strong></td>
+        <td>Policy jobs, dry-run validation, deployment</td>
+        <td><span class="badge badge-ready">Ready</span></td>
+        <td>Publish desired JSON payload directly to <code>systrome/ap/{mac}/config/desired</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Spectrum &amp; RF</strong></td>
+        <td>Channel utilization charts, active alerts</td>
+        <td><span class="badge badge-ready">Ready</span></td>
+        <td>Ingest live RF noise floor and interference stream from MQTT telemetry.</td>
+      </tr>
+      <tr>
+        <td><strong>Messaging Broker</strong></td>
+        <td>MQTT Broker Container &amp; TLS Listener</td>
+        <td><span class="badge badge-planned">Next to Build</span></td>
+        <td>Add <code>mosquitto</code> container to <code>docker-compose.yml</code> on port 8883/1883.</td>
+      </tr>
+      <tr>
+        <td><strong>Ingestion Worker</strong></td>
+        <td>Backend MQTT Subscriber &amp; DB Sync Worker</td>
+        <td><span class="badge badge-planned">Next to Build</span></td>
+        <td>Implement <code>mqtt.worker.ts</code> in Express server to process telemetry &amp; LWT.</td>
+      </tr>
+      <tr>
+        <td><strong>AP Agent Daemon</strong></td>
+        <td>OpenWrt / Linux <code>systrome-agent</code></td>
+        <td><span class="badge badge-planned">Next to Build</span></td>
+        <td>Build reference agent script bridging OpenWrt <code>ubus</code>/<code>uci</code> with MQTT.</td>
+      </tr>
+      <tr>
+        <td><strong>FOTA Firmware</strong></td>
+        <td>Dual-Bank A/B Firmware Manager</td>
+        <td><span class="badge badge-planned">Planned</span></td>
+        <td>Build Firmware Upload &amp; OTA rollout view in the Web UI.</td>
+      </tr>
+      <tr>
+        <td><strong>Live Diagnostics</strong></td>
+        <td>Remote Web Terminal &amp; Packet Capture</td>
+        <td><span class="badge badge-planned">Planned</span></td>
+        <td>Web-based pcap download and remote ping/traceroute trigger via MQTT RPC.</td>
+      </tr>
+      <tr>
+        <td><strong>3rd-Party Adapters</strong></td>
+        <td>Cisco, Aruba, Omada, UniFi, Ruijie</td>
+        <td><span class="badge badge-secondary">Secondary</span></td>
+        <td>Maintain REST/SNMP proxy connectors for non-Systrome hardware.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Section 7 -->
+  <h2>7. Implementation Blueprint for the WAC Monorepo</h2>
+  <div class="callout callout-success">
+    <strong>Immediate Phase 2 Engineering Plan</strong>:
+    <ol>
+      <li><strong>Add Mosquitto Broker to <code>docker-compose.yml</code></strong>: Deploy Eclipse Mosquitto with TLS listener (port 8883) and persistent session storage.</li>
+      <li><strong>Create Backend MQTT Worker in <code>apps/server</code></strong>: Subscribe to <code>systrome/ap/+/status</code>, <code>telemetry</code>, <code>events</code>, and <code>config/reported</code>, auto-updating PostgreSQL and streaming live to the frontend via WebSockets.</li>
+      <li><strong>Connect Config Deployer to MQTT</strong>: When deploying an AP Group or SSID policy, publish the target JSON payload to <code>systrome/ap/{mac}/config/desired</code>.</li>
+      <li><strong>Package Reference OpenWrt Agent</strong>: Provide an installable <code>systrome-agent</code> script that translates MQTT desired config to OpenWrt UCI commands.</li>
+    </ol>
+  </div>
+
+</body>
+</html>
