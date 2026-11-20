@@ -116,6 +116,7 @@ npm run dev:web
 
 ## 📚 Documentation Index
 
+- [Systrome Native AP Architecture & MQTT Specification (docs/SYSTROME_AP_ARCHITECTURE.md)](file:///home/thetypo36/Documents/antigravity/friendly-babbage/docs/SYSTROME_AP_ARCHITECTURE.md)
 - [Architecture Design (docs/ARCHITECTURE.md)](file:///home/thetypo36/Documents/antigravity/friendly-babbage/docs/ARCHITECTURE.md)
 - [Deployment & Evaluation Guide (docs/DEPLOYMENT.md)](file:///home/thetypo36/Documents/antigravity/friendly-babbage/docs/DEPLOYMENT.md)
 - [Network Engineer Testing Runbook (docs/TESTING.md)](file:///home/thetypo36/Documents/antigravity/friendly-babbage/docs/TESTING.md)

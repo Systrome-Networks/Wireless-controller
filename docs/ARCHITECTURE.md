@@ -1,8 +1,10 @@
 # Enterprise-Grade Multi-Vendor Wireless Access Controller (WAC)
-## System Architecture
+## System Architecture & Systrome AP Core
 
 ### 1. Overview
-The Wireless Access Controller (WAC) is a centralized, enterprise-grade network management platform designed to orchestrate, monitor, configure, and secure large-scale wireless infrastructure across multiple hardware vendors.
+The Wireless Access Controller (WAC) is a centralized, enterprise-grade network management platform designed to orchestrate, monitor, configure, and secure wireless infrastructure. 
+
+**Strategic Priority**: The platform implements a **Systrome-First Architecture**, providing deep, native orchestration for Systrome Wireless Access Points via **MQTT over TLS + OpenWrt UCI/Ubus**, while maintaining vendor adapters for legacy and third-party controllers (Cisco, Aruba, TP-Link Omada, Ubiquiti UniFi, Ruijie).
 
 ```
 +-----------------------------------------------------------------------------------+
@@ -21,34 +23,40 @@ The Wireless Access Controller (WAC) is a centralized, enterprise-grade network 
     |                                      |                                   |
     v                                      v                                   v
 +-----------------------+      +-----------------------+      +---------------------+
-| CORE SERVICES         |      | BACKGROUND WORKERS    |      | PERSISTENCE & CACHE |
-| - Org & Site Service  |      | - Discovery Scanner   |      | - PostgreSQL 16     |
-| - Inventory Service   | <--> | - Config Deployer     | <--> |   (Prisma ORM)      |
-| - Config Engine       |      | - Telemetry Collector |      | - Redis 7           |
-| - AAA / RADIUS Service|      | - Alert Evaluator     |      |   (Cache + Queues)  |
-| - Alerting Service    |      | - CAPWAP Daemon       |      | - Prometheus /      |
-| - RF & Topology Svc   |      |                       |      |   Grafana Metrics   |
+| CORE SERVICES         |      | COMMUNICATIONS & BUS  |      | PERSISTENCE & CACHE |
+| - Org & Site Service  |      | - Systrome MQTT Engine|      | - PostgreSQL 16     |
+| - Inventory Service   | <--> |   (Mosquitto TLS 8883)| <--> |   (Prisma ORM)      |
+| - Config Twin Engine  |      | - WebSocket Hub (/ws) |      | - Redis 7           |
+| - AAA / RADIUS Service|      | - Background Workers  |      |   (Cache + Queues)  |
+| - Alerting Service    |      | - Discovery Scanner   |      | - FreeRADIUS 3.0    |
+| - RF & Auto-RRM Svc   |      | - Config Deployer     |      |   (rlm_sql driver)  |
 +-----------------------+      +-----------------------+      +---------------------+
                                            |
                                            v
 +-----------------------------------------------------------------------------------+
 |                             DEVICE COMMUNICATION LAYER                            |
-+-------------------+--------------------+--------------------+---------------------+
-| VENDOR ADAPTERS   | CAPWAP SUBSYSTEM   | SNMP ENGINE        | AAA / FREERADIUS    |
-| - Cisco C9800/Aire| - RFC 5415 Parser  | - SNMP v2c/v3      | - PostgreSQL Tables |
-| - Aruba AOS 8/10  | - RFC 5416 802.11  | - MIB-II / 802.11  | - Dynamic VLAN/MAB  |
-| - TP-Link Omada   | - Discovery / Join | - Vendor OIDs      | - RFC 5176 CoA /    |
-| - Ubiquiti UniFi  | - Echo Keepalive   | - Polling & Traps  |   Disconnect Packet |
-| - Ruijie Cloud    | - WTP State Mach.  | - Subnet Discovery | - 802.1X / EAP      |
-+-------------------+--------------------+--------------------+---------------------+
++------------------------------+--------------------+-------------------------------+
+| SYSTROME NATIVE AP SUBSYSTEM | AAA / FREERADIUS   | 3RD-PARTY VENDOR ADAPTERS     |
+| - MQTT v3.1.1/v5 (TLS 8883)  | - PostgreSQL Tables| - Cisco C9800 / AireOS        |
+| - Device Twin (Desired/Rep)  | - Dynamic VLAN/MAB | - Aruba AOS 8/10              |
+| - OpenWrt UCI / Ubus Agent   | - RFC 5176 CoA/DM  | - TP-Link Omada               |
+| - Instant LWT Offline Alert  | - 802.1X / EAP-TLS | - Ubiquiti UniFi              |
+| - Safe-Mode Auto Rollback    | - Accounting (rad) | - Ruijie Cloud                |
+| - Sub-second RF Telemetry    |                    | - Legacy SNMP v2c/v3 Engine   |
++------------------------------+--------------------+-------------------------------+
 ```
 
 ### 2. Monorepo Organization
-- `apps/server`: Express API server, RBAC authorization, audit logging, WebSocket hub.
-- `apps/worker`: Asynchronous network scanner, telemetry poller, config deployer.
-- `apps/web`: React 18 / Tailwind CSS enterprise dashboard.
-- `packages/database`: Prisma ORM schema, migrations, connection pool, seed data.
-- `packages/types`: Shared domain interfaces, request/response models, enums.
-- `packages/adapters`: Multi-vendor wireless adapters (Cisco, Aruba, Omada, UniFi, Ruijie) and vendor simulator.
-- `packages/snmp`: SNMP v2c/v3 client engine with vendor MIB profiles.
-- `docker/`: Docker Compose, FreeRADIUS configurations, Prometheus, Grafana.
+- `apps/server`: Express API server, RBAC authorization, audit logging, WebSocket hub, and MQTT ingestion worker.
+- `apps/web`: React 18 / Tailwind CSS enterprise dashboard with full dark/light theme support.
+- `packages/database`: Prisma ORM schema, PostgreSQL connection pool, seed data, and FreeRADIUS SQL models.
+- `packages/types`: Shared domain interfaces, request/response models, enums, and MQTT payload schemas.
+- `docker/`: Single-step Docker Compose orchestration, FreeRADIUS SQL configurations, and NGINX reverse proxy.
+- `docs/`: Complete engineering documentation:
+  - [Systrome Native AP Architecture (docs/SYSTROME_AP_ARCHITECTURE.md)](file:///home/thetypo36/Documents/antigravity/friendly-babbage/docs/SYSTROME_AP_ARCHITECTURE.md)
+  - [Deployment Runbook & Evaluation (docs/DEPLOYMENT.md)](file:///home/thetypo36/Documents/antigravity/friendly-babbage/docs/DEPLOYMENT.md)
+  - [Testing Runbook (docs/TESTING.md)](file:///home/thetypo36/Documents/antigravity/friendly-babbage/docs/TESTING.md)
+  - [Database Schema (docs/DATABASE.md)](file:///home/thetypo36/Documents/antigravity/friendly-babbage/docs/DATABASE.md)
+  - [REST & WebSocket API (docs/API.md)](file:///home/thetypo36/Documents/antigravity/friendly-babbage/docs/API.md)
+  - [Security Specifications (docs/SECURITY.md)](file:///home/thetypo36/Documents/antigravity/friendly-babbage/docs/SECURITY.md)
+  - [Product Roadmap (docs/ROADMAP.md)](file:///home/thetypo36/Documents/antigravity/friendly-babbage/docs/ROADMAP.md)
